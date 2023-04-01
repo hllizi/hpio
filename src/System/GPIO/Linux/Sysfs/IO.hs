@@ -46,7 +46,7 @@ import Foreign.C.Error (throwErrnoIfMinus1Retry)
 import Foreign.C.Types (CInt(..))
 import qualified System.Directory as D (doesDirectoryExist, doesFileExist, getDirectoryContents)
 import "unix" System.Posix.IO (OpenMode(ReadOnly, WriteOnly), closeFd, defaultFileFlags, openFd)
-import "unix-bytestring" System.Posix.IO.ByteString (fdWrite)
+import "unix-bytestring" System.Posix.IO.ByteString.Ext (fdWrite)
 
 import System.GPIO.Linux.Sysfs.Monad (MonadSysfs(..))
 

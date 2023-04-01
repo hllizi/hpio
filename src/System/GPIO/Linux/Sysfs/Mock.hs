@@ -125,6 +125,7 @@ import System.GPIO.Linux.Sysfs.Util
 import System.GPIO.Types
        (Pin(..), PinDirection(..), PinValue(..), gpioExceptionToException,
         gpioExceptionFromException, invertValue)
+import Data.Text.Conversions
 
 -- | A mock pin.
 data MockPinState =
@@ -515,7 +516,7 @@ makeChip chip =
            mkdir chipdir
            mkfile (chipdir </> "base") (Constant [intToBS $ _base chip])
            mkfile (chipdir </> "ngpio") (Constant [intToBS $ length (_initialPinStates chip)])
-           mkfile (chipdir </> "label") (Constant [toS $ _label chip])
+           mkfile (chipdir </> "label") (Constant [unUTF8 . convertText $ _label chip])
 
 addPins :: Int -> [MockPinState] -> MockPins -> Either MockFSException MockPins
 addPins base states pm = foldrM addPin pm (zip (map Pin [base..]) states)
