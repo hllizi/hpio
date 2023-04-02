@@ -36,7 +36,6 @@ extra-source-files:
     .hlint.yaml
     README.md
     changelog.md
-    package.yaml
     stack.yaml
     stack-lts-9.yaml
     stack-lts-11.yaml

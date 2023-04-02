@@ -1,0 +1,245 @@
+name:        hpio
+version:     0.9.0.7
+synopsis:    Monads for GPIO in Haskell
+category:    System
+stability:   experimental
+author:      Drew Hess <src@drewhess.com>
+maintainer:  Drew Hess <src@drewhess.com>
+copyright:   Copyright (c) 2019, Drew Hess
+license:     BSD3
+github:      dhess/hpio
+
+description: ! 'This package provides an embedded DSL for writing cross-platform
+
+  GPIO programs in Haskell. Currently only Linux is supported (via the
+
+  @sysfs@ filesystem), but other Unix GPIO platforms will be supported
+
+  in the future.
+
+
+  Monads and low-level actions are also provided for each supported
+
+  platform''s native GPIO API, if you want to program directly to
+
+  the platform API.
+
+
+  Example programs are provided in the ''examples'' directory of the
+
+  source code distribution. There is also a "System.GPIO.Tutorial"
+
+  module, which explains how to use the cross-platform DSL.'
+
+tested-with: GHC==8.0.2 GHC==8.2.2 GHC==8.4.4 GHC==8.6.3 GHC==8.6.4 GHC==8.6.5
+
+flags:
+  test-hlint:
+    description: Build hlint test
+    manual: true
+    default: false
+  test-doctests:
+    description: Build doctests
+    manual: true
+    default: true
+  linux-bbone-tests:
+    description: >
+      Enable Linux BeagleBone-specific tests. Disabled by default. See
+      test/System/GPIO/Linux/Sysfs/BeagleBoneSpec.hs for requirements.
+      Run with "cabal test -flinux-bbone-tests".
+    manual: true
+    default: false
+  examples:
+    description: Build the example programs
+    manual: true
+    default: false
+
+when:
+  - condition: impl(ghc >= 8.0)
+    then:
+      ghc-options:
+        - -Wall
+        - -Wincomplete-uni-patterns
+        - -Wincomplete-record-updates
+    else:
+      ghc-options:
+        - -Wall
+        - -fwarn-incomplete-uni-patterns
+        - -fwarn-incomplete-record-updates
+
+default-extensions:
+  - NoImplicitPrelude
+
+library:
+  when:
+    - condition: impl(ghc >= 8.0)
+      then:
+        ghc-options:
+          - -Wcompat
+          - -Wnoncanonical-monad-instances
+          - -Wnoncanonical-monadfail-instances
+      else:
+        # provide/emulate `Control.Monad.Fail` and `Data.Semigroups` API for pre-GHC8
+        dependencies:
+          - fail       ==4.9.*
+          - semigroups ==0.18.*
+  source-dirs: src
+  c-sources:
+    - src/System/GPIO/Linux/Sysfs/pollSysfs.c
+  cc-options:
+    - -Wall
+  other-extensions:
+    - ConstraintKinds
+    - CPP
+    - DefaultSignatures
+    - DeriveDataTypeable
+    - DeriveGeneric
+    - ExistentialQuantification
+    - FlexibleContexts
+    - FlexibleInstances
+    - FunctionalDependencies
+    - GADTs
+    - GeneralizedNewtypeDeriving
+    - InterruptibleFFI
+    - KindSignatures
+    - LambdaCase
+    - MultiParamTypeClasses
+    - OverloadedStrings
+    - PackageImports
+    - QuasiQuotes
+    - Safe
+    - TemplateHaskell
+    - Trustworthy
+    - TypeSynonymInstances
+    - UndecidableInstances
+  dependencies:
+    - QuickCheck          >=2.7.6  && <2.14
+    - base                >=4.7.0  && <5
+    - bytestring          >=0.10.4 && <0.11
+    - containers          >=0.5.5  && <0.7
+    - directory           >=1.2.1  && <1.4
+    - exceptions          >=0.8.0  && <1
+    - filepath            >=1.3.0  && <1.5
+    - monad-control       ==1.*
+    - monad-logger        ==0.3.*
+    - mtl                 >=2.1.3  && <2.3
+    - protolude           ==0.2.*
+    - text                >=1.2.0  && <1.3
+    - transformers        >=0.3.0  && <0.6
+    - transformers-base   ==0.4.*
+    - unix                >=2.7.0  && <2.8
+    - unix-bytestring     >=0.3.7  && <0.4
+
+executables:
+  hpio-reader-example: &executable
+    main: GpioReader.hs
+    source-dirs: examples
+    other-modules: []
+    other-extensions:
+      - ConstraintKinds
+      - FlexibleContexts
+      - LambdaCase
+      - OverloadedStrings
+    ghc-options:
+      - -threaded
+    when:
+      - condition: "!(flag(examples))"
+        then:
+          buildable: false
+        else:
+          dependencies:
+          - base
+          - async                >=2.0.2 && <2.3
+          - exceptions
+          - hpio
+          - mtl
+          - optparse-applicative >=0.11.0 && <0.15
+          - protolude
+          - text
+          - transformers
+      - condition: impl(ghc >= 8.0)
+        ghc-options:
+          - -Wcompat
+          - -Wnoncanonical-monad-instances
+          - -Wnoncanonical-monadfail-instances
+          - -fno-warn-redundant-constraints
+  hpio-sysfs-example:
+    <<: *executable
+    main: Sysfs.hs
+    other-extensions:
+      - FlexibleContexts
+      - LambdaCase
+      - OverloadedStrings
+  hpio-example:
+    <<: *executable
+    main: Gpio.hs
+    other-extensions:
+      - ConstraintKinds
+      - LambdaCase
+      - OverloadedStrings
+
+tests:
+  hlint:
+    main: hlint.hs
+    source-dirs: test
+    other-modules: []
+    ghc-options:
+      - -w
+      - -threaded
+    when:
+    - condition: "!(flag(test-hlint))"
+      then:
+        buildable: false
+      else:
+        dependencies:
+          - base
+          - hlint     >=2.0 && <2.3
+          - protolude
+  doctest:
+    main: doctest.hs
+    source-dirs: test
+    other-modules: []
+    ghc-options:
+      - -threaded
+    when:
+    - condition: (!(flag(test-doctests))) || (impl(ghc <7.10))
+      then:
+        buildable: false
+      else:
+        dependencies:
+          - base
+          - doctest   >=0.9.13
+          - filepath
+          - protolude
+          - QuickCheck
+  spec:
+    main: Spec.hs
+    source-dirs:
+      - test
+    ghc-options:
+      - -threaded
+    dependencies:
+      - base
+      - containers
+      - directory
+      - exceptions
+      - filepath
+      - hpio
+      - hspec                >=2.1.7
+      - protolude
+      - QuickCheck
+    when:
+      - condition: flag(linux-bbone-tests)
+        cpp-options:
+          -DRUN_LINUX_BBONE_TESTS=1
+
+extra-source-files:
+  - .hlint.yaml
+  - README.md
+  - changelog.md
+  - package.yaml
+  - stack.yaml
+  - stack-lts-9.yaml
+  - stack-lts-11.yaml
+  - stack-lts-12.yaml
+  - stack-lts-13.yaml
